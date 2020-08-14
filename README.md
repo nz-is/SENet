@@ -1,7 +1,7 @@
 # Squeeze and Excitation Networks in TF.keras
 Reimplementation of [Squeeze and Excitation Networks](https://arxiv.org/pdf/1709.01507.pdf) in Keras 2.0.3+ 
 
-Note: this is was meant to be a practice and not some serious stuff
+Note: this was meant to be a practice and not some serious stuff
 
 ## Models
 Current supported models:
