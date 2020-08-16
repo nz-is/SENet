@@ -56,7 +56,7 @@ class SEResNet:
         print("Stride at conv res: {}".format(stride))
         x = Conv2D(filters=K, kernel_size=(1, 1), strides=stride,
                     kernel_regularizer=l2(reg))(relu1)
-      #x = se_block(x)
+      x = se_block(x)
       print("Residual: {}, conv3: {}".format(x.shape, conv3.shape))
       return add([x, conv3])
 
@@ -124,8 +124,6 @@ class SEResNet:
       x = Activation("relu")(x)
       x = ZeroPadding2D(padding=((1,1), (1,1)), name="pool1_pad")(x)
       x = MaxPooling2D(3, strides=2)(x)
-
-      print("First Maxpool: {}".format(x.shape))
 
       for i in range(0, len(stages)):
         stride = (1,1) if i == 0 else (2,2) # block 2 (projection block) w stride(1,1)
