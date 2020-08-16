@@ -1,6 +1,5 @@
-from tensorflow.keras.layers import AveragePooling2D, GlobalAveragePooling2D, MaxPooling2D,\
-    ZeroPadding2D, Dense, multiply, Reshape, Conv2D, \
-    Flatten, add, BatchNormalization, Activation, Input
+from tensorflow.keras.layers import GlobalAveragePooling2D,\
+   Dense, multiply, Reshape
 from tensorflow.keras import backend as K
    
 def se_block(in_block, ratio=16):
