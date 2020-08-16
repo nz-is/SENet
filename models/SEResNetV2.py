@@ -30,38 +30,38 @@ class SEResNet:
         References:
           -   [ResNet](https://arxiv.org/abs/1512.03385)
           -   [Squeeze-and-Excitation Networks ] (https://arxiv.org/abs/1709.01507)
-        """
+      """
 
-        x = in_block
-        chan_in = in_block.shape.as_list()[-1]
-        bn1 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(x)
-        relu1 = Activation("relu")(bn1)
-        conv1 = Conv2D(filters=int(K * .25), kernel_size=(1, 1), 
+      x = in_block
+      chan_in = in_block.shape.as_list()[-1]
+      bn1 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(x)
+      relu1 = Activation("relu")(bn1)
+      conv1 = Conv2D(filters=int(K * .25), kernel_size=(1, 1), 
                       use_bias=False,
                       kernel_regularizer=l2(reg))(relu1) #Conv2D learns 1/4(0.25) of the last conv filter
 
-        bn2 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(conv1)
-        relu2 = Activation("relu")(bn2)
-        conv2 = Conv2D(filters=int(K * .25), kernel_size=(3, 3), strides=stride, 
+      bn2 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(conv1)
+      relu2 = Activation("relu")(bn2)
+      conv2 = Conv2D(filters=int(K * .25), kernel_size=(3, 3), strides=stride, 
                       padding="same",
                       use_bias=False,
                       kernel_regularizer=l2(reg))(relu2) #Conv2D learns 1/4(0.25) of the last conv filter
 
-        bn3 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(conv2)
-        relu3 = Activation("relu")(bn3)
-        conv3 = Conv2D(filters=K, kernel_size=(1, 1),  
+      bn3 = BatchNormalization(axis=chanDim, epsilon=bnEps, momentum=bnMom)(conv2)
+      relu3 = Activation("relu")(bn3)
+      conv3 = Conv2D(filters=K, kernel_size=(1, 1),  
                       kernel_regularizer=l2(reg))(relu3) 
 
         if red:
-          x = Conv2D(filters=K, kernel_size=(1, 1), strides=stride,
+        x = Conv2D(filters=K, kernel_size=(1, 1), strides=stride,
                       kernel_regularizer=l2(reg))(relu1)
-        x = se_block(x)
-        return add([x, conv3])
+      x = se_block(x)
+      return add([x, conv3])
 
     @staticmethod
     def build(width, height, depth, classes, stages, filters, include_top, pooling,
               reg=1e-3, bnEps=2e-5, bnMom=0.0):
-        """ Instantiate the Squeeze and Excite ResNet architecture. Note that ,
+      """ Instantiate the Squeeze and Excite ResNet architecture. Note that ,
           when using TensorFlow for best performance you should set
           `image_data_format="channels_last"` in your Keras config
           at ~/.keras/keras.json.
@@ -103,53 +103,53 @@ class SEResNet:
 
           # Returns
               A Keras model instance.
-        """
-        inputShape = (height, width, depth)
-        chanDim = -1
+      """
+      inputShape = (height, width, depth)
+      chanDim = -1
 
-        if K.image_data_format() == "channels_first": 
-          inputShape = (depth, height, width) 
-          chanDim = 1
+      if K.image_data_format() == "channels_first": 
+        inputShape = (depth, height, width) 
+        chanDim = 1
 
-        inputs = Input(shape=inputShape)
+      inputs = Input(shape=inputShape)
     
 
-        # block 1 (initial conv block)
-        x = ZeroPadding2D(padding=((3, 3), (3, 3)), name='conv1_pad')(inputs)
-        x = Conv2D(64, (7,7), use_bias=False, strides=(2,2), 
+      # block 1 (initial conv block)
+      x = ZeroPadding2D(padding=((3, 3), (3, 3)), name='conv1_pad')(inputs)
+      x = Conv2D(64, (7,7), use_bias=False, strides=(2,2), 
                     kernel_initializer="he_normal", kernel_regularizer=l2(reg))(x)
-        x = BatchNormalization(axis=chanDim, name="bn_conv1")(x)
-        x = Activation("relu")(x)
-        x = ZeroPadding2D(padding=((1,1), (1,1)), name="pool1_pad")(x)
-        x = MaxPooling2D(3, strides=2)(x)
+      x = BatchNormalization(axis=chanDim, name="bn_conv1")(x)
+      x = Activation("relu")(x)
+      x = ZeroPadding2D(padding=((1,1), (1,1)), name="pool1_pad")(x)
+      x = MaxPooling2D(3, strides=2)(x)
 
-        for i in range(0, len(stages)):
-          stride = (1,1) if i == 0 else (2,2) # block 2 (projection block) w stride(1,1)
+      for i in range(0, len(stages)):
+        stride = (1,1) if i == 0 else (2,2) # block 2 (projection block) w stride(1,1)
 
-          print("Stage {}, Stride={}".format(i, stride))
-          x = SEResNet.residual_module(x, filters[i+1], stride, 
+        print("Stage {}, Stride={}".format(i, stride))
+        x = SEResNet.residual_module(x, filters[i+1], stride, 
                                     chanDim=chanDim, red=True, bnEps=bnEps, bnMom=bnMom)
-          for j in range(0, stages[i] + 1): #stacking res block to each depth layer
-            x = SEResNet.residual_module(x, filters[i+1], stride=(1,1),
+        for j in range(0, stages[i] + 1): #stacking res block to each depth layer
+          x = SEResNet.residual_module(x, filters[i+1], stride=(1,1),
                                       chanDim=chanDim, bnEps=bnEps, 
                                       bnMom=bnMom)
-        x = BatchNormalization(axis=chanDim, epsilon=bnEps, 
+      x = BatchNormalization(axis=chanDim, epsilon=bnEps, 
                                 momentum=bnMom)(x)
-        x = Activation("relu")(x)
+      x = Activation("relu")(x)
 
-        if include_top:
-          x = GlobalAveragePooling2D()(x)
-          x = Dense(classes, use_bias=False, kernel_regularizer=l2(reg),
+      if include_top:
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(classes, use_bias=False, kernel_regularizer=l2(reg),
                     activation='softmax')(x)
-        else:
-            if pooling == 'avg':
-                print("Adding average pool")
-                x = GlobalAveragePooling2D()(x)
-            elif pooling == 'max':
-                x = GlobalMaxPooling2D()(x)
+      else:
+          if pooling == 'avg':
+              print("Adding average pool")
+              x = GlobalAveragePooling2D()(x)
+          elif pooling == 'max':
+              x = GlobalMaxPooling2D()(x)
       
-        model = Model(inputs=inputs, outputs=x, name="SEResNet")
-        return model 
+      model = Model(inputs=inputs, outputs=x, name="SEResNet")
+      return model 
 
     def SEResNet18(input_shape, 
                 classes=1000, 
@@ -157,9 +157,9 @@ class SEResNet:
                 input_tensor=None, 
                 pooling=None):
     
-        (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
+      (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
 
-        return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 3, 3, 3), 
+      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 3, 3, 3), 
                           include_top=include_top, pooling=pooling,
                             filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
       
@@ -169,9 +169,9 @@ class SEResNet:
                 input_tensor=None, 
                 pooling=None):
     
-        (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
+      (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
 
-        return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 4, 6, 3), 
+      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 4, 6, 3), 
                           include_top=include_top, pooling=pooling,
                             filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
   
@@ -183,9 +183,10 @@ class SEResNet:
     
         (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
 
-        return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 6, 23, 3), 
+      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 6, 23, 3), 
                           include_top=include_top, pooling=pooling,
                             filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
+    
     
     def SEResNet152(input_shape, 
                 classes=1000, 
@@ -193,9 +194,9 @@ class SEResNet:
                 input_tensor=None, 
                 pooling=None):
     
-        (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
+      (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
 
-        return SEResNet.build(width=width, height=height, depth=depth, classes=classes, 
+      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, 
                               stages=[3, 8, 36, 3], 
                           include_top=include_top, pooling=pooling,
                             filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
