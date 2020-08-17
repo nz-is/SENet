@@ -10,7 +10,7 @@ from tensorflow.keras.optimizers import SGD
 from keras.regularizers import l2
 from utils import se_block
 
-__all__ = ["SEResNet50", "SEResNet18", "SEResNet50", "SEResNet101", "SEResNet154"]
+__all__ = ["SEResNet18", "SEResNet50", "SEResNet101", "SEResNet154"]
 
 class SEResNet:  
     @staticmethod
@@ -161,7 +161,7 @@ class SEResNet:
 
       return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 3, 3, 3), 
                           include_top=include_top, pooling=pooling,
-                            filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
+                            filters=(64, 64, 128, 256, 512), reg=1e-5, bnEps=2e-5, bnMom=0.0)
       
     def SEResNet50(input_shape, 
                 classes=1000, 
@@ -183,7 +183,7 @@ class SEResNet:
     
         (height, width, depth) = (input_shape[1], input_shape[2], input_shape[3])
 
-      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 6, 23, 3), 
+      return SEResNet.build(width=width, height=height, depth=depth, classes=classes, stages=(3, 4, 23, 3), 
                           include_top=include_top, pooling=pooling,
                             filters=(64, 256, 512, 1024, 2048), reg=1e-5, bnEps=2e-5, bnMom=0.0)
     
